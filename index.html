@@ -6,9 +6,9 @@
   <title>Screen Sharing and Chat</title>
 </head>
 <body>
-  <!-- Welcome Message -->
-  <div id="welcomeMessage">
-    <h1>Hello Janhavi! <span>&#10084;&#65039;</span></h1>
+  <!-- Greeting Message -->
+  <div id="greeting">
+    <p>Hello Janhavi! <span style="color: red;">❤️</span></p>
   </div>
 
   <!-- Chat Form -->
@@ -17,28 +17,12 @@
     <button type="submit">Send</button>
   </form>
 
-  <!-- File Sharing Controls -->
-  <input type="file" id="fileInput" />
-  <button id="shareFile">Share File</button>
+  <!-- Screen Sharing Video -->
+  <video id="screenVideo" autoplay></video>
 
-  <!-- Screen Sharing Controls -->
-  <button id="startScreenShare">Start Screen Share</button>
-  <button id="stopScreenShare" style="display:none;">Stop Screen Share</button>
-
-  <!-- User List and Status Messages -->
-  <div id="userList"></div>
-  <div id="statusMessages"></div>
-
-  <!-- Socket.IO Script -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
   <script>
     const socket = io();
-
-    // Welcome Message
-    socket.on('connect', () => {
-      const welcomeMessage = document.getElementById('welcomeMessage');
-      welcomeMessage.innerHTML = '<h1>Hello User! <span>&#10084;&#65039;</span></h1>';
-    });
 
     // Chat Form Submission
     const chatForm = document.getElementById('chatForm');
@@ -53,84 +37,21 @@
       }
     });
 
-    // File Sharing Controls
-    const fileInput = document.getElementById('fileInput');
-    const shareFileButton = document.getElementById('shareFile');
+    // Screen Sharing
+    const screenVideo = document.getElementById('screenVideo');
 
-    shareFileButton.addEventListener('click', () => {
-      const file = fileInput.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-
-        reader.onloadend = () => {
-          const fileData = {
-            name: file.name,
-            type: file.type,
-            dataUrl: reader.result,
-          };
-          socket.emit('shareFile', fileData);
-          fileInput.value = '';
-        };
-      }
-    });
-
-    // Screen Sharing Controls
-    const startScreenShareButton = document.getElementById('startScreenShare');
-    const stopScreenShareButton = document.getElementById('stopScreenShare');
-
-    startScreenShareButton.addEventListener('click', () => {
-      navigator.mediaDevices.getDisplayMedia({ video: true })
-        .then((stream) => {
-          socket.emit('screen sharing', stream);
-          startScreenShareButton.style.display = 'none';
-          stopScreenShareButton.style.display = 'inline-block';
-        })
-        .catch((error) => console.error(error));
-    });
-
-    stopScreenShareButton.addEventListener('click', () => {
-      socket.emit('stop screen sharing');
-      startScreenShareButton.style.display = 'inline-block';
-      stopScreenShareButton.style.display = 'none';
-    });
-
-    // User List and Status Messages
-    const userList = document.getElementById('userList');
-    const statusMessages = document.getElementById('statusMessages');
-
-    socket.on('userList', (users) => {
-      userList.innerHTML = '<strong>Users:</strong>';
-      users.forEach((user) => {
-        const userItem = document.createElement('div');
-        userItem.textContent = user;
-        userList.appendChild(userItem);
-      });
-    });
-
-    socket.on('statusMessage', (message) => {
-      const messageItem = document.createElement('div');
-      messageItem.textContent = message;
-      statusMessages.appendChild(messageItem);
+    socket.on('screen sharing', (stream) => {
+      screenVideo.srcObject = stream;
     });
 
     // Handle incoming chat messages
     socket.on('chat message', (msg) => {
-      const messageItem = document.createElement('div');
-      messageItem.textContent = msg;
-      statusMessages.appendChild(messageItem);
+      console.log(msg); // You can customize how you display chat messages on the client side
     });
 
-    // Handle incoming shared files
-    socket.on('sharedFile', (fileData) => {
-      // Your code for handling incoming shared files
-      // ...
-    });
-
-    // Handle incoming screen sharing data
-    socket.on('screen sharing', (data) => {
-      // Your code for handling incoming screen sharing data
-      // ...
+    // Update the user list when it changes
+    socket.on('userList', (users) => {
+      console.log('Connected Users:', users);
     });
   </script>
 </body>
